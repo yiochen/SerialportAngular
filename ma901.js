@@ -95,7 +95,8 @@ async function getPromises()
     promises.set(sports[i]["path"],null);
   } 
 }
-  
+
+//get available ports lists
 app.get("/ports",async(req,res,next)=>{
     res.status(200).json({
       ports:sports
@@ -103,18 +104,32 @@ app.get("/ports",async(req,res,next)=>{
 })
 
 
-app.get("/SV/:portname", async (req,res,next) => {
+app.get("/read/:command/:portname", async (req,res,next) => {
     if (promises.has(req.params.portname))
     {
       const portname = req.params.portname;
       while (promises.get(portname) !== null) {
         // there is another request that is currently waiting for serial port, so we just wait
           await promises.get(portname);
-        }
-        const SVreload = [1,3,0,0,0,8,68,12];
-        const blength = 21;
+      }
+      let command;
+      let blength;
+      let hascommand=false;
+      // read SV
+      if (req.params.command == "SV"){
+        command = [1,3,0,0,0,8,68,12];
+        blength = 21;
+        hascommand = true;
+      }
+      //read PV  
+      else if (req.params.command == "PV"){
+        command = [[1,3,0,200,0,8,197,242]];
+        blength = 21;
+        hascommand = true;
+      }
+      if (hascommand){
         // finally no one is using serial port, we can start writing to it and wait for the result
-        promises.set(portname,readFromSerialPort(portname, SVreload, blength));
+        promises.set(portname,readFromSerialPort(portname, command, blength));
         // promise = readFromSerialPort(req.params.portname, SVreload, blength);
         const data = await promises.get(portname); 
         // by await, we give the control back to system to call us back when promise finishes.
@@ -125,6 +140,7 @@ app.get("/SV/:portname", async (req,res,next) => {
         res.status(200).json({
             posts:data
         })
+      }
     }
     // do something about data,
     next();
