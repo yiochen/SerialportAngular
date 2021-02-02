@@ -31,7 +31,7 @@ function readSerialPort(parser) {
 
 // helper function that writes to serial port and then wait for the result
 // finally close the serial port
-async function readFromSerialPort(portname, command,blength) {
+async function readFromSerialPort(portname, command,blength, test) {
     await SerialPort.list().then(x=>sports = x);
     let isvalued = false;
     for (let i=0;i<sports.length;i++)
@@ -46,10 +46,14 @@ async function readFromSerialPort(portname, command,blength) {
     catch{
       return -2;
     }
-    await port.open();
-    await port.write(command);
+    console.log(test+" open port");
+    port.open();
+    console.log(test+" opened port");
+    port.write(command);
+    console.log(test+" wrote command");
     const parser = new ByteLength({length:blength});
-    await port.pipe(parser);
+    port.pipe(parser);
+    console.log(test+" parser");
     try{
       return await readSerialPort(parser);
     }
@@ -57,7 +61,8 @@ async function readFromSerialPort(portname, command,blength) {
       return -1;
     }
     finally{
-      await port.close();
+      port.close();
+      console.log(test+" closed port");
     }
 }
 
@@ -187,14 +192,12 @@ app.get("/ports",async(req,res,next)=>{
 // });
 
 app.get("/read/:command/:portname", async (req,res,next) => {
-    console.log("before");
-    console.log(promise);
+    console.log(req.params.command + " before " + promise);
     while (promise !== null) {
     // there is another request that is currently waiting for serial port, so we just wait
       await promise;
     }
-    console.log("after");
-    console.log(promise);
+    console.log(req.params.command+ " after "+ promise);
     let command;
     let blength;
     let hascommand=false;
@@ -212,15 +215,14 @@ app.get("/read/:command/:portname", async (req,res,next) => {
     }
     if (hascommand){
       // finally no one is using serial port, we can start writing to it and wait for the result
-      promise = readFromSerialPort(req.params.portname, command, blength);
-      console.log("start read");
+      promise = readFromSerialPort(req.params.portname, command, blength,req.params.command);
       const data = await promise; 
-      console.log("end read");
       // by await, we give the control back to system to call us back when promise finishes.
       res.status(200).json({
         data
       })
       next();
+      console.log("\n");
       promise=null;
       // promise = null; 
       // set global promise variable to null, meaning, we are done using serial port in this request, 
