@@ -1,0 +1,46 @@
+<div class="col-1">
+    PV:
+  </div>
+  <div class="text-center mt-3">
+    <div class="row">
+      <div *ngFor="let PV of PVs; index as i" class="col-1">
+        <div class="card mb-2">
+          <div class="rows">CH{{i+1}}</div>
+        </div>
+        <div class="card mb-2">
+          <div class="rows">{{PV}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-1">
+    SV:
+  </div>
+  <div class="text-center mt-3">
+    <div class="row">
+      <div *ngFor="let SV of SVs; index as i" class="col-1">
+        <div class="card mb-2">
+          <div class="rows">CH{{i+1}}</div>
+        </div>
+        <div class="card mb-2">
+          <div class="rows">{{SV}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-1">
+    out:
+  </div>
+  <div class="text-center mt-3">
+    <div class="row">
+      <div *ngFor="let out of outs; index as i" class="col-1">
+        <div class="card mb-2">
+          <div class="rows">CH{{i+1}}</div>
+        </div>
+        <div class="card mb-2">
+          <div class="rows">{{out}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
