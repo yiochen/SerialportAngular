@@ -25,7 +25,7 @@ function readSerialPort(parser) {
         parser.on('data', (data) => {
           clearTimeout(timerid);
           resolve(data);
-          console.log(data);
+          // console.log(data);
         }); // when we receive the data, we resolve the promise, marking it as complete.
       }
       catch{
@@ -143,8 +143,8 @@ async function getPromises()
 app.use((req,res,next) =>{
   res.setHeader("Access-Control-Allow-Origin","*");
   res.setHeader(
-    "Access-Control-Allow-Header",
-    "Origin, X-Requested-With, Conten-Type, Accept"
+    "Access-Control-Allow-Headers",
+    "*"
   );
   res.setHeader(
     "Access-Control-Allow-Methods",
@@ -157,12 +157,12 @@ app.use((req,res,next) =>{
 app.get("/ports",async(req,res,next)=>{
     await SerialPort.list().then(x=>sports = x);
     res.status(200).json({
-      ports:sports
+      sports
     })
 })
 
 app.get("/read/:command/:portname", async (req,res,next) => {
-  console.log(promises);
+  // console.log(promises);
   if (promises.has(req.params.portname))
   {
     // console.log(sports);
@@ -211,49 +211,46 @@ app.get("/read/:command/:portname", async (req,res,next) => {
   next();
 });
 
-// app.get("/read/:command/:portname", async (req,res,next) => {
-//     console.log(req.params.command + " before " + promise);
-//     while (promise !== null) {
-//     // there is another request that is currently waiting for serial port, so we just wait
-//       await promise;
-//     }
-//     console.log(req.params.command+ " after "+ promise);
-//     let command;
-//     let blength;
-//     let hascommand=false;
-//     // read SV
-//     if (req.params.command === "SV"){
-//       command = [1,3,0,200,0,8,197,242];
-//       blength = 21;
-//       hascommand = true;
-//     }
-//     //read PV  
-//     else if (req.params.command === "PV"){
-//       command = [1,3,0,0,0,8,68,12];
-//       blength = 21;
-//       hascommand = true;
-//     }
-//     if (hascommand){
-//       // finally no one is using serial port, we can start writing to it and wait for the result
-//       promise = readFromSerialPort(req.params.portname, command, blength,req.params.command);
-//       const data = await promise; 
-//       // by await, we give the control back to system to call us back when promise finishes.
-//       res.status(200).json({
-//         data
-//       })
-//       next();
-//       console.log("\n");
-//       promise=null;
-//       // promise = null; 
-//       // set global promise variable to null, meaning, we are done using serial port in this request, 
-//       // other requests can start using it if they are waiting for serial port.
-//     }
-//     else
-//     {
-//       next();
-//       promise=null;
-//     }
-// });
+app.post("/write/:command/:portname/:ch/:temp",async (req,res,next)=>{
+  // console.log(req.params);
+  if (promises.has(req.params.portname)){
+    const portname = req.params.portname;
+    while (promises.get(portname) !== null) {
+      // there is another request that is currently waiting for serial port, so we just wait
+        await promises.get(portname);
+    }
+    let command;
+    let blength;
+    let hascommand=false;
+    if (req.params.command === "SV"){
+      command = new Array(1,6,0);
+      command.push(200+ parseInt(req.params.ch) -1);
+      let low = req.params.temp % 256;
+      let high = (req.params.temp - low) / 256;
+      command.push(high);
+      command.push(low);
+      command = await createCRC(command);
+      blength = 8;
+      hascommand=true;
+    }
+    if (hascommand){
+      // console.log(command);
+      // finally no one is using serial port, we can start writing to it and wait for the result
+      promises.set(portname,readFromSerialPort(portname, command, blength));
+      // promise = readFromSerialPort(req.params.portname, SVreload, blength);
+      const data = await promises.get(portname); 
+      // by await, we give the control back to system to call us back when promise finishes.
+      res.status(200).json({
+        data
+      })
+      promises.set(portname,null);
+      // promise = null; 
+      // set global promise variable to null, meaning, we are done using serial port in this request, 
+      // other requests can start using it if they are waiting for serial port.
+    }
+  }
+  next();
+})
 
 app.get("/setSV/:portname/:ch/:tem", async (req,res,next) => {
     while (promise !== null) {

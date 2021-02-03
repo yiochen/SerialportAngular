@@ -1,3 +1,15 @@
+<form #form='ngForm' >
+  <div class="form-group px-2">
+    <label>Ports:</label>
+    <select *ngIf="connecting===false" (click)="loadPorts()"name="port" [(ngModel)]="port" >
+      <option *ngFor="let p of ports">
+        {{p}}
+      </option>
+    </select>
+    <button *ngIf="connecting===false" (click)="connectPort()" type="submit">Connect</button>
+    <button *ngIf="connecting===true" (click)="disconnectPort()" type="submit">Disconnect</button>
+  </div>
+</form>
 <div class="col-1">
     PV:
   </div>
@@ -25,6 +37,12 @@
         <div class="card mb-2">
           <div class="rows">{{SV}}</div>
         </div>
+        <div class="card mb-2" *ngIf="connecting">
+          <input type="text" class="text-center" [(ngModel)]="setSVs[i]" (keyup.enter)="setSV(i+1,setSVs[i])">
+        </div>
+        <!-- <div class="card mb-2" *ngIf="connecting">
+          <button (click)="setSV(i+1,setSVs[i])">Set</button>
+        </div> -->
       </div>
     </div>
   </div>
@@ -43,4 +61,3 @@
       </div>
     </div>
   </div>
-  
