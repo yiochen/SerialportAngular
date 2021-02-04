@@ -163,14 +163,9 @@ app.get("/ports",async(req,res,next)=>{
 
 app.get("/read/:command/:portname", async (req,res,next) => {
   // console.log(promises);
-  if (promises.has(req.params.portname))
+  const portname = req.params.portname;
+  if (promises.has(portname))
   {
-    // console.log(sports);
-    const portname = req.params.portname;
-    while (promises.get(portname) !== null) {
-      // there is another request that is currently waiting for serial port, so we just wait
-        await promises.get(portname);
-    }
     let command;
     let blength;
     let hascommand=false;
@@ -191,6 +186,11 @@ app.get("/read/:command/:portname", async (req,res,next) => {
       command = [1,3,0,20,0,8,4,8];
       blength = 21;
       hascommand = true;
+    }
+    // console.log(sports);
+    while (promises.get(portname) !== null) {
+      // there is another request that is currently waiting for serial port, so we just wait
+        await promises.get(portname);
     }
     if (hascommand){
       // console.log(command);
@@ -213,12 +213,8 @@ app.get("/read/:command/:portname", async (req,res,next) => {
 
 app.post("/write/:command/:portname/:ch/:temp",async (req,res,next)=>{
   // console.log(req.params);
-  if (promises.has(req.params.portname)){
-    const portname = req.params.portname;
-    while (promises.get(portname) !== null) {
-      // there is another request that is currently waiting for serial port, so we just wait
-        await promises.get(portname);
-    }
+  const portname = req.params.portname;
+  if (promises.has(portname)){
     let command;
     let blength;
     let hascommand=false;
@@ -232,6 +228,10 @@ app.post("/write/:command/:portname/:ch/:temp",async (req,res,next)=>{
       command = await createCRC(command);
       blength = 8;
       hascommand=true;
+    }
+    while (promises.get(portname) !== null) {
+      // there is another request that is currently waiting for serial port, so we just wait
+        await promises.get(portname);
     }
     if (hascommand){
       // console.log(command);
@@ -251,29 +251,3 @@ app.post("/write/:command/:portname/:ch/:temp",async (req,res,next)=>{
   }
   next();
 })
-
-app.get("/setSV/:portname/:ch/:tem", async (req,res,next) => {
-    while (promise !== null) {
-    // there is another request that is currently waiting for serial port, so we just wait
-      await promise;
-    }
-    let setSV = new Array(1,6,0);
-    setSV.push(200+ parseInt(req.params.ch) -1);
-    let low = req.params.tem % 256;
-    let high = (req.params.tem - low) / 256;
-    setSV.push(high);
-    setSV.push(low);
-    setSV = await createCRC(setSV);
-    const blength = 8;
-    // finally no one is using serial port, we can start writing to it and wait for the result
-    promise = readFromSerialPort(req.params.portname, setSV, blength);
-    const data = await promise; 
-    // by await, we give the control back to system to call us back when promise finishes.
-    promise = null; // set global promise variable to null, meaning, we are done using serial port in this request, 
-    // other requests can start using it if they are waiting for serial port.
-    res.status(200).json({
-        data
-    })
-    // do something about data,
-    next();
-});

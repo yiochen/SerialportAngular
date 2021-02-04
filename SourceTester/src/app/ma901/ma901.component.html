@@ -1,43 +1,60 @@
-<form #form='ngForm' >
-  <div class="form-group px-2">
-    <label>Ports:</label>
-    <select *ngIf="connecting===false" (click)="loadPorts()"name="port" [(ngModel)]="port" >
-      <option *ngFor="let p of ports">
-        {{p}}
-      </option>
-    </select>
-    <button *ngIf="connecting===false" (click)="connectPort()" type="submit">Connect</button>
-    <button *ngIf="connecting===true" (click)="disconnectPort()" type="submit">Disconnect</button>
-  </div>
-</form>
-<div class="col-1">
-    PV:
-  </div>
-  <div class="text-center mt-3">
-    <div class="row">
-      <div *ngFor="let PV of PVs; index as i" class="col-1">
-        <div class="card mb-2">
-          <div class="rows">CH{{i+1}}</div>
+<div class="container">
+  <form #form='ngForm'>
+    <div class="form-group px-2">
+      <label>Ports:</label>
+      <select *ngIf="connecting===false" (click)="loadPorts()"name="port" [(ngModel)]="port" >
+        <option *ngFor="let p of ports">
+          {{p}}
+        </option>
+      </select>
+      <label *ngIf="connecting===true">{{port}}</label>
+      <button class="btn-success" *ngIf="connecting===false" (click)="connectPort()" type="submit">Connect</button>
+      <button class="btn-danger"*ngIf="connecting===true" (click)="disconnectPort()" type="submit">Disconnect</button>
+    </div>
+  </form>
+  <div class="row text-center">
+    <div class="col-1">
+      <div class="card">
+        CHs:
+      </div>
+    </div>
+    <div *ngFor="let PV of PVs;index as i" class="col-1">
+      <div class="card">
+        <div class="rows">
+          CH{{i+1}}
         </div>
-        <div class="card mb-2">
+      </div>
+    </div>
+  </div>
+  <div class="text-center">
+    <div class="row">
+      <div class="col-1">
+        <div class="card">
+          PVs:
+        </div>
+      </div>
+      <div *ngFor="let PV of PVs; index as i" class="col-1">
+        <div class="card">
           <div class="rows">{{PV}}</div>
         </div>
       </div>
     </div>
   </div>
-  <div class="col-1">
-    SV:
-  </div>
-  <div class="text-center mt-3">
+  <div class="text-center">
     <div class="row">
+      <div class="col-1">
+        <div class="card">
+            SVs:
+        </div>
+        <div class="card">
+            setSVs:
+        </div>
+      </div>
       <div *ngFor="let SV of SVs; index as i" class="col-1">
-        <div class="card mb-2">
-          <div class="rows">CH{{i+1}}</div>
+        <div class="card">
+          {{SV}}
         </div>
-        <div class="card mb-2">
-          <div class="rows">{{SV}}</div>
-        </div>
-        <div class="card mb-2" *ngIf="connecting">
+        <div class="card" *ngIf="connecting">
           <input type="text" class="text-center" [(ngModel)]="setSVs[i]" (keyup.enter)="setSV(i+1,setSVs[i])">
         </div>
         <!-- <div class="card mb-2" *ngIf="connecting">
@@ -46,18 +63,87 @@
       </div>
     </div>
   </div>
-  <div class="col-1">
-    out:
-  </div>
-  <div class="text-center mt-3">
+  <div class="text-center">
     <div class="row">
-      <div *ngFor="let out of outs; index as i" class="col-1">
-        <div class="card mb-2">
-          <div class="rows">CH{{i+1}}</div>
+      <div class="col-1">
+        <div class="card">
+          outs:
         </div>
-        <div class="card mb-2">
+      </div>
+      <div *ngFor="let out of outs; index as i" class="col-1">
+        <div class="card">
           <div class="rows">{{out}}</div>
         </div>
       </div>
     </div>
   </div>
+  <div class="text-center">
+    <div class="row">
+      <div class="col-1">
+        <div class="card">
+          <div class="rows">
+            Ramp Functions:
+          </div>
+        </div>
+      </div>
+      <div *ngFor="let ramp of ramps; index as i" class="col-1">
+        <form #form='ngForm' *ngIf="connecting">
+          <div class="ramp_set_up" *ngIf="CHpromises[i]===null"> 
+            <div class="rows">
+              start
+            </div>
+            <div class="card">
+              <input type="number" class="text-center" name="start" [(ngModel)]="ramp.start">
+            </div>
+            <div class="rows">
+              end
+            </div>
+            <div class="card">
+              <input type="number" class="text-center" name="end" [(ngModel)]="ramp.end">
+            </div>
+            <div class="rows">
+              per minute
+            </div>
+            <div class="card" >
+              <input type="number" class="text-center" name="per" [(ngModel)]="ramp.per">
+            </div>
+            <button class="btn-success" (click)="setRamp(i+1,ramp.start,ramp.end,ramp.per)">Start</button>
+          </div>
+          <div class="ramp_prossing" *ngIf="CHpromises[i]!==null">
+            <div class="rows">
+              start
+            </div>
+            <div class="card text-center">
+              {{ramp.start}}
+            </div>
+            <div class="rows">
+              end
+            </div>
+            <div class="card text-center">
+              {{ramp.end}}
+            </div>
+            <div class="rows">
+              per minute
+            </div>
+            <div class="card text-center">
+              {{ramp.per}}
+            </div>
+            <div class="rows">
+              current:
+            </div>
+            <div class="card text-center">
+              {{SVs[i]}}
+            </div>
+            <div class="rows">
+              timer:
+            </div>
+            <div class="card text-center">
+              {{(ramp.end-SVs[i])*60/ramp.per | abs | number:"0.0-1"}}s
+            </div>
+            <button class="btn-danger" (click)="stopRamp(i+1)">Stop</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

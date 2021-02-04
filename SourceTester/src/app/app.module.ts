@@ -7,12 +7,14 @@ import { HttpClientModule } from '@angular/common/http';
 import { MA901Component } from './ma901/ma901.component';
 import { FormsModule } from '@angular/forms';
 import { ToastrModule } from 'ngx-toastr';
-import { BrowserAnimationsModule } from "@angular/platform-browser/animations"
+import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
+import { AbsPipe } from './abs.pipe'
 
 @NgModule({
   declarations: [
     AppComponent,
     MA901Component,
+    AbsPipe,
   ],
   imports: [
     BrowserModule,
