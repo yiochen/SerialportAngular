@@ -13,7 +13,7 @@ import { Sport } from '../_models/Sport';
 })
 export class MA901Component implements OnInit {
   baseUrl = 'http://localhost:3000/';
-  PVs=new Array(8);
+  PVs=new Array(8); // Javascript array can be dynamic length, even though you created a array of 8, it can still be expand
   SVs=new Array(8);
   setSVs=new Array(8);
   outs=new Array(8);
@@ -35,6 +35,10 @@ export class MA901Component implements OnInit {
       this.timerID.push(null);
       this.timerReject.push(null);
     }
+    // a better way to initialize an array to null https://yiou.me/blog/posts/javascript-create-array
+    // this.timerReject = new Array(8).fill(null);
+    // but why not just keep the elements as undefined?
+    // timerReject: Array<() => void> = [];
   }
 
   ngOnInit() {
@@ -42,7 +46,7 @@ export class MA901Component implements OnInit {
   }
 
   async connectPort(){
-    if (this.port === undefined)
+    if (this.port === undefined) // always wrap if/else with {}.  Even for single statement. Javascript doesn't rely on indentation to decide block.
       this.port = this.ports[0];
     console.log(this.port);
       this.http.get<ReceivedData>(this.baseUrl + 'read/PV/'+this.port).subscribe(async response=>{
@@ -56,22 +60,23 @@ export class MA901Component implements OnInit {
       );
   }
 
-  async disconnectPort(){
+  disconnectPort(){
     if (this.connecting===true)
     {
       this.connecting = false;
       clearTimeout(this.loadingpromise);
-      await this.clearData();
+      this.clearData();
       this.toastr.error("Port is disconnected!");
       for (let i=1;i<=8;i++)
-        await this.stopRamp(i);
+        this.stopRamp(i);
     }
   }
 
   async loading(){
     await this.loads();
+    // this is not a promise, it will not wait
     this.loadingpromise=setTimeout(async ()=>{
-      await this.loading();
+      await this.loading(); 
     },1000);
   }
 
@@ -107,9 +112,7 @@ export class MA901Component implements OnInit {
       this.http.get<ReceivedData>(this.baseUrl + 'read/PV/'+this.port).subscribe(async response=>{
         this.PVs = await this.refreshdata(response.data.data,false);
       },
-      async ()=>{
-        await this.disconnectPort();
-      });
+      this.disconnectPort.bind(this)); // since disconnectPort can be sync, we don't need to await, we can justt use disconnectPort function directly. But remember to bind this so that it remembers the context.
   }
 
   async loadSVs(){
@@ -118,7 +121,7 @@ export class MA901Component implements OnInit {
         this.SVs = await this.refreshdata(response.data.data,false);
       },
       async ()=>{
-        await this.disconnectPort();
+        await this.disconnectPort(); // no need for await. Also does subscribe wait for the promise if we return one? If not, using async won't make it wait https://rxjs-dev.firebaseapp.com/api/index/class/Observable#subscribe-
       });
   }
   
@@ -179,7 +182,7 @@ export class MA901Component implements OnInit {
     this.clearrampdata(CH);
   }
 
-  async timer(timerInMillisecond:number,CH:number){
+  timer(timerInMillisecond:number,CH:number){
     return new Promise((resolve,reject)=>{
       this.timerID[CH-1]=setTimeout(resolve,timerInMillisecond);
       this.timerReject[CH-1]=()=>{console.log("error");reject;}
@@ -193,7 +196,7 @@ export class MA901Component implements OnInit {
     this.ramps[CH-1].per=null;
   }
 
-  async stopRamp(CH:number){
+  stopRamp(CH:number){
     if (this.CHpromises[CH-1]===null)
       return;
     clearTimeout(this.timerID[CH-1]);
@@ -201,7 +204,7 @@ export class MA901Component implements OnInit {
     this.clearrampdata(CH);
   }
 
-  async clearData(){
+  clearData(){
     for (let i=0;i<8;i++)
     {
       this.PVs[i]=null;
