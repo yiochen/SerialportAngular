@@ -18,7 +18,7 @@ export class MA901Component implements OnInit {
   setSVs=new Array(8);
   outs=new Array(8);
   ports:string[]=[];
-  port:string="";
+  port:string=undefined;
   loadingpromise=null;
   connecting=false;
   params:CHtemp={}as CHtemp;
@@ -37,19 +37,20 @@ export class MA901Component implements OnInit {
     }
   }
 
-  ngOnInit(): void {
+  ngOnInit() {
     this.loadPorts();
   }
 
   async connectPort(){
+    if (this.port === undefined)
+      this.port = this.ports[0];
     console.log(this.port);
-      this.http.get<ReceivedData>(this.baseUrl + 'read/PV/'+this.port).subscribe(async ()=>{
+      this.http.get<ReceivedData>(this.baseUrl + 'read/PV/'+this.port).subscribe(async response=>{
         await this.loading();
         this.connecting = true;
         this.toastr.success("Connected");
         },
-        async error=>{
-          if (error.status===404)
+        error=>{
             alert("This port is not MA901 port");
         }
       );
@@ -132,7 +133,7 @@ export class MA901Component implements OnInit {
   }
 
   async setSV(CH:number,temp:string){
-    this.http.post(this.baseUrl+'write/SV/COM9/'+CH.toString()+'/'+temp,{}).subscribe(async ()=>{
+    this.http.post(this.baseUrl+'write/SV/' + this.port + '/' + CH.toString() + '/' + temp,{}).subscribe(async ()=>{
       this.setSVs[CH-1]=null;
       await this.loadSVs();
       this.toastr.success("set CH"+CH.toString()+" to " + temp + "C");

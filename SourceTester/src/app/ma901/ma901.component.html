@@ -2,7 +2,7 @@
   <form #form='ngForm'>
     <div class="form-group px-2">
       <label>Ports:</label>
-      <select *ngIf="connecting===false" (click)="loadPorts()"name="port" [(ngModel)]="port" >
+      <select *ngIf="connecting===false" (click)="loadPorts()" name="port" [(ngModel)]="port" >
         <option *ngFor="let p of ports">
           {{p}}
         </option>
@@ -34,8 +34,11 @@
         </div>
       </div>
       <div *ngFor="let PV of PVs; index as i" class="col-1">
-        <div class="card">
-          <div class="rows">{{PV}}</div>
+        <div class="card" *ngIf="PV<1400">
+          {{PV}}
+        </div>
+        <div class="card" *ngIf="PV>=1400" style="color: red;">
+          NA
         </div>
       </div>
     </div>
